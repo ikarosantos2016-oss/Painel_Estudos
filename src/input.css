@@ -4,29 +4,34 @@
 @source "./script.js";
 
 @theme {
-    --color-canvas: #f7f5f1;
-    --color-ink: #303548;
-    --color-muted: #73788a;
-    --color-line: #e8e6e5;
+    --color-canvas: #f0f3ef;
+    --color-ink: #173d2b;
+    --color-muted: #52675b;
+    --color-line: #cbd8ce;
 
-    --color-lavender: #e9e4f5;
-    --color-lavender-strong: #b7a9d7;
-    --color-sky: #e2edf4;
-    --color-sky-strong: #6889a0;
-    --color-sage: #e4eee5;
-    --color-sage-strong: #64816d;
-    --color-peach: #f7e9dc;
-    --color-blush: #f4e5e7;
-    --color-blush-strong: #9c6975;
+    --color-ifrn-green: #087443;
+    --color-ifrn-dark: #064c30;
+    --color-ifrn-red: #c6283d;
+    --color-panel: #ffffff;
+    --color-panel-muted: #e8efe9;
+    --color-lavender: #e3eee6;
+    --color-lavender-strong: #087443;
+    --color-sky: #deeee4;
+    --color-sky-strong: #075f39;
+    --color-sage: #d4e8da;
+    --color-sage-strong: #075f39;
+    --color-peach: #f3e5dd;
+    --color-blush: #f7e2e4;
+    --color-blush-strong: #a51f34;
 
-    --shadow-soft: 0 24px 70px -38px rgb(48 53 72 / 28%);
-    --shadow-card: 0 12px 36px -28px rgb(48 53 72 / 24%);
+    --shadow-soft: 0 24px 70px -34px rgb(6 76 48 / 32%);
+    --shadow-card: 0 14px 32px -20px rgb(6 76 48 / 24%), 0 2px 8px -4px rgb(6 76 48 / 12%);
 }
 
 body {
     background-image:
-        radial-gradient(ellipse at 4% 0%, rgb(233 228 245 / 45%), transparent 32rem),
-        radial-gradient(ellipse at 96% 18%, rgb(226 237 244 / 55%), transparent 34rem);
+        radial-gradient(ellipse at 4% 0%, rgb(8 116 67 / 10%), transparent 32rem),
+        radial-gradient(ellipse at 96% 18%, rgb(198 40 61 / 7%), transparent 34rem);
 }
 
 button,
@@ -42,23 +47,23 @@ button {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible {
-    outline: 2px solid #a99acb;
+    outline: 2px solid #087443;
     outline-offset: 3px;
 }
 
 #listaDisciplinas > div {
-    border-color: #e8e6e5;
+    border-color: #c5d9cb;
     border-radius: 1rem;
-    background-color: #fbfaf8;
+    background-color: #eef4ef;
     padding: 1rem;
 }
 
 #tabelaHistorico tr:not(:last-child) {
-    border-color: #eeecea;
+    border-color: #d7e2d9;
 }
 
 #tabelaHistorico tr:hover {
-    background-color: #fbfaf8;
+    background-color: #edf4ee;
 }
 
 #tabelaHistorico td {
