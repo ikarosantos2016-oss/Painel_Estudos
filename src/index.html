@@ -7,8 +7,8 @@
     <link rel="stylesheet" href="output.css?v=2">
     <script src="script.js" defer></script>
 </head>
-<body class="min-h-screen bg-canvas font-sans text-ink antialiased">
-    <div class="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10">
+<body class="flex min-h-screen flex-col bg-gray-600 font-sans text-ink antialiased">
+    <div class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-10">
         <header class="relative mb-8 overflow-hidden rounded-4xl border border-ifrn-green/40 bg-linear-to-br from-ifrn-dark via-ifrn-green to-ifrn-dark p-6 shadow-soft sm:p-9">
             <div class="relative flex flex-col gap-7 lg:flex-row lg:items-end lg:justify-between">
                 <div class="max-w-xl">
@@ -49,12 +49,54 @@
                         <input type="date" id="dataProva" data-date-field class="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-lavender-strong focus:ring-4 focus:ring-lavender/60">
                     </div>
                     <div class="rounded-2xl bg-panel-muted p-4">
-                        <label for="dataResultado" class="mb-2 block text-sm font-semibold text-muted">Data do resultado</label>
+                        <label for="dataResultado" class="mb-2 block text-sm font-semibold text-muted">Resultado preliminar</label>
                         <input type="date" id="dataResultado" data-date-field class="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-lavender-strong focus:ring-4 focus:ring-lavender/60">
                     </div>
                     <div class="rounded-2xl bg-panel-muted p-4">
-                        <label for="dataHomologacao" class="mb-2 block text-sm font-semibold text-muted">Homologação</label>
+                        <label for="dataHomologacao" class="mb-2 block text-sm font-semibold text-muted">Resultado definitivo</label>
                         <input type="date" id="dataHomologacao" data-date-field class="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-lavender-strong focus:ring-4 focus:ring-lavender/60">
+                    </div>
+                </div>
+            </section>
+
+            <section class="rounded-3xl border border-line border-t-4 border-t-ifrn-green bg-panel p-5 shadow-card sm:p-7">
+                <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 class="text-lg font-bold text-ifrn-dark">Meta semanal</h2>
+                        <p class="mt-1 text-sm text-muted">Defina quantas horas deseja estudar de segunda a domingo.</p>
+                    </div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                        <div>
+                            <label for="metaSemanalHoras" class="mb-2 block text-sm font-semibold text-muted">Meta em horas</label>
+                            <input type="number" id="metaSemanalHoras" min="0.5" max="168" step="0.5" data-weekly-goal class="min-h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-ifrn-green focus:ring-4 focus:ring-ifrn-green/25 sm:w-36">
+                        </div>
+                        <button type="button" data-action="salvar-meta-semanal" class="min-h-11 rounded-xl bg-ifrn-green px-4 text-sm font-bold text-white transition hover:bg-ifrn-dark focus-visible:ring-4 focus-visible:ring-ifrn-green/30">
+                            Salvar meta
+                        </button>
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <div class="mb-2 flex items-center justify-between gap-3">
+                        <span class="text-sm font-semibold text-ink">Progresso da semana</span>
+                        <span id="percentualMetaSemanal" class="text-sm font-bold text-ifrn-dark">0%</span>
+                    </div>
+                    <div id="barraMetaSemanal" role="progressbar" aria-label="Progresso da meta semanal" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" class="h-3 overflow-hidden rounded-full bg-panel-muted">
+                        <div id="preenchimentoMetaSemanal" class="h-full rounded-full bg-ifrn-green transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="statusMetaSemanal" class="mt-2 text-sm text-muted">Defina uma meta para acompanhar seu progresso nesta semana.</p>
+                </div>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div class="rounded-2xl bg-sage p-4">
+                        <span class="block text-xs font-bold uppercase tracking-[0.12em] text-sage-strong">Estudado</span>
+                        <span id="estudadoMetaSemanal" class="mt-1 block text-xl font-bold tracking-tight text-ink">0h 0m</span>
+                    </div>
+                    <div class="rounded-2xl bg-panel-muted p-4">
+                        <span class="block text-xs font-bold uppercase tracking-[0.12em] text-muted">Meta</span>
+                        <span id="objetivoMetaSemanal" class="mt-1 block text-xl font-bold tracking-tight text-ink">Não definida</span>
+                    </div>
+                    <div class="rounded-2xl bg-blush p-4">
+                        <span class="block text-xs font-bold uppercase tracking-[0.12em] text-blush-strong">Faltam</span>
+                        <span id="restanteMetaSemanal" class="mt-1 block text-xl font-bold tracking-tight text-ink">—</span>
                     </div>
                 </div>
             </section>
@@ -116,5 +158,8 @@
             </section>
         </main>
     </div>
+    <footer class="border-t border-line bg-panel/70 px-4 py-5 text-center text-sm text-muted">
+        <p>José Íkaro Santos Fernandes <span aria-hidden="true">·</span> TSI 2026.1</p>
+    </footer>
 </body>
 </html>

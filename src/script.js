@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
             case 'apagar-log':
                 apagarLog(button.dataset.logId);
                 break;
+            case 'salvar-meta-semanal':
+                salvarMetaSemanal();
+                break;
         }
     });
 
@@ -52,6 +55,13 @@ function formatarTempo(minutosTotais) {
     return `${h}h ${m}m`;
 }
 
+function formatarDataLocal(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+}
+
 function escaparHTML(valor) {
     return String(valor).replace(/[&<>"']/g, caractere => ({
         '&': '&amp;',
@@ -70,6 +80,7 @@ function novoConcurso() {
         id: Date.now().toString(),
         nome: nome,
         datas: { prova: '', resultado: '', homologacao: '' },
+        metaSemanalHoras: null,
         disciplinas: []
     };
 
@@ -107,6 +118,9 @@ function mudarConcurso() {
     document.getElementById('dataProva').value = concursoAtual.datas.prova;
     document.getElementById('dataResultado').value = concursoAtual.datas.resultado;
     document.getElementById('dataHomologacao').value = concursoAtual.datas.homologacao;
+    document.getElementById('metaSemanalHoras').value = Number.isFinite(concursoAtual.metaSemanalHoras) && concursoAtual.metaSemanalHoras > 0
+        ? concursoAtual.metaSemanalHoras
+        : '';
 
     renderizarDisciplinas();
     renderizarHistoricoEStats();
@@ -134,6 +148,21 @@ function salvarDatas() {
     concursoAtual.datas.resultado = document.getElementById('dataResultado').value;
     concursoAtual.datas.homologacao = document.getElementById('dataHomologacao').value;
     salvarBD();
+}
+
+function salvarMetaSemanal() {
+    if (!concursoAtual) return;
+
+    const input = document.getElementById('metaSemanalHoras');
+    const metaHoras = input.valueAsNumber;
+    if (!input.value || !input.checkValidity() || !Number.isFinite(metaHoras) || metaHoras <= 0 || metaHoras > 168) {
+        alert("Informe uma meta entre 0,5 e 168 horas, em incrementos de 0,5 hora.");
+        return;
+    }
+
+    concursoAtual.metaSemanalHoras = metaHoras;
+    salvarBD();
+    renderizarHistoricoEStats();
 }
 
 function novaDisciplina() {
@@ -183,7 +212,7 @@ function registrarEstudo(idDisciplina) {
         return;
     }
 
-    const dataAtual = new Date().toISOString().split('T')[0];
+    const dataAtual = formatarDataLocal(new Date());
     bd.logs.push({
         id: Date.now().toString(),
         idConcurso: concursoAtual.id,
@@ -206,22 +235,57 @@ function apagarLog(idLog) {
     renderizarHistoricoEStats();
 }
 
+function obterInicioSemana(data) {
+    const inicioSemana = new Date(data.getFullYear(), data.getMonth(), data.getDate());
+    const diasDesdeSegunda = (inicioSemana.getDay() + 6) % 7;
+    inicioSemana.setDate(inicioSemana.getDate() - diasDesdeSegunda);
+    return inicioSemana;
+}
+
+function renderizarProgressoMetaSemanal(minutosEstudados) {
+    const metaHoras = concursoAtual.metaSemanalHoras;
+    const metaDefinida = Number.isFinite(metaHoras) && metaHoras > 0;
+    const minutosMeta = metaDefinida ? metaHoras * 60 : 0;
+    const percentual = metaDefinida ? Math.round((minutosEstudados / minutosMeta) * 100) : 0;
+    const percentualBarra = Math.min(percentual, 100);
+
+    document.getElementById('estudadoMetaSemanal').innerText = formatarTempo(minutosEstudados);
+    document.getElementById('objetivoMetaSemanal').innerText = metaDefinida ? formatarTempo(minutosMeta) : 'Não definida';
+    document.getElementById('restanteMetaSemanal').innerText = metaDefinida
+        ? formatarTempo(Math.max(minutosMeta - minutosEstudados, 0))
+        : '—';
+    document.getElementById('percentualMetaSemanal').innerText = `${percentual}%`;
+    document.getElementById('preenchimentoMetaSemanal').style.width = `${percentualBarra}%`;
+    document.getElementById('barraMetaSemanal').setAttribute('aria-valuenow', percentualBarra);
+    document.getElementById('statusMetaSemanal').innerText = metaDefinida
+        ? percentual >= 100
+            ? `Meta alcançada! Você completou ${percentual}% do objetivo semanal.`
+            : `Você completou ${percentual}% da meta. Continue no seu ritmo.`
+        : 'Defina uma meta para acompanhar seu progresso nesta semana.';
+}
+
 function renderizarHistoricoEStats() {
     const logsConcurso = bd.logs.filter(log => log.idConcurso === concursoAtual.id);
-    const hoje = new Date().toISOString().split('T')[0];
+    const agora = new Date();
+    const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const inicioAmanha = new Date(inicioHoje);
+    inicioAmanha.setDate(inicioAmanha.getDate() + 1);
+    const inicioSemana = obterInicioSemana(agora);
+    const inicioProximaSemana = new Date(inicioSemana);
+    inicioProximaSemana.setDate(inicioProximaSemana.getDate() + 7);
     let minHoje = 0;
     let minSemana = 0;
     let minMes = 0;
     const msPorDia = 86400000;
-    const agora = Date.now();
+    const timestampAgora = agora.getTime();
     const tbody = document.getElementById('tabelaHistorico');
     tbody.innerHTML = '';
 
     const logsOrdenados = [...logsConcurso].sort((a, b) => b.timestamp - a.timestamp);
     logsOrdenados.forEach(log => {
-        if (log.data === hoje) minHoje += log.minutos;
-        if ((agora - log.timestamp) <= (7 * msPorDia)) minSemana += log.minutos;
-        if ((agora - log.timestamp) <= (30 * msPorDia)) minMes += log.minutos;
+        if (log.timestamp >= inicioHoje.getTime() && log.timestamp < inicioAmanha.getTime()) minHoje += log.minutos;
+        if (log.timestamp >= inicioSemana.getTime() && log.timestamp < inicioProximaSemana.getTime()) minSemana += log.minutos;
+        if ((timestampAgora - log.timestamp) <= (30 * msPorDia)) minMes += log.minutos;
 
         const disciplina = concursoAtual.disciplinas.find(item => item.id === log.idDisciplina);
         const nomeDisciplina = disciplina ? disciplina.nome : 'Disciplina Removida';
@@ -246,4 +310,5 @@ function renderizarHistoricoEStats() {
     document.getElementById('statsHoje').innerText = formatarTempo(minHoje);
     document.getElementById('statsSemana').innerText = formatarTempo(minSemana);
     document.getElementById('statsMes').innerText = formatarTempo(minMes);
+    renderizarProgressoMetaSemanal(minSemana);
 }
