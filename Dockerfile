@@ -10,3 +10,4 @@ RUN npm run build:css
 FROM nginx:alpine
 COPY --from=build /app/src/ /usr/share/nginx/html/
 COPY imagens/ /usr/share/nginx/html/imagens/
+COPY nginx.default.conf /etc/nginx/conf.d/default.conf

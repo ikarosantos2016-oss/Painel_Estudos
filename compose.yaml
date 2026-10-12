@@ -3,4 +3,18 @@ services:
     build: .
     ports:
       - "8080:80"
+    volumes:
+      - ./src:/usr/share/nginx/html:ro
+      - ./imagens:/usr/share/nginx/imagens:ro
+    depends_on:
+      - css-watch
+    restart: unless-stopped
+
+  css-watch:
+    build:
+      context: .
+      target: build
+    command: npm run watch:css
+    volumes:
+      - ./src:/app/src
     restart: unless-stopped
