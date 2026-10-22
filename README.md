@@ -105,6 +105,35 @@ JSON.parse(localStorage.getItem('concursos_app'))
 └── package-lock.json          # Versões travadas das dependências npm
 ```
 
+## Como o código funciona
+
+A lógica da aplicação está em `src/script.js` e é executada no próprio navegador. O objeto `bd` representa os dados carregados da chave `concursos_app` no `localStorage`. Ele tem duas listas principais:
+
+- `concursos`: cada concurso guarda seu identificador, nome, datas importantes, meta semanal e disciplinas.
+- `logs`: cada sessão de estudo guarda seu identificador, o concurso e a disciplina associados, a duração em minutos, a data e um timestamp.
+
+Quando uma alteração é feita, `salvarBD()` converte o objeto para JSON com `JSON.stringify()` e atualiza o `localStorage`. Na inicialização, `JSON.parse()` recupera o conteúdo salvo. Assim, os dados continuam disponíveis depois que a página é fechada, mas permanecem somente naquele navegador e naquela origem.
+
+### Fluxo da interface
+
+1. `init()` preenche o seletor de concursos e abre o primeiro concurso salvo, se houver.
+2. `mudarConcurso()` atualiza o concurso ativo, mostra ou esconde o painel e chama as funções de renderização.
+3. Ações como criar concurso, adicionar disciplina, registrar estudo ou excluir um registro modificam `bd`, salvam os dados e atualizam as partes correspondentes da tela.
+4. `renderizarDisciplinas()` monta os campos para lançar minutos. `renderizarHistoricoEStats()` filtra os registros do concurso ativo, atualiza o histórico e calcula os totais de estudo.
+
+Os botões usam atributos `data-action`. Um listener de clique no documento identifica a ação e encaminha a chamada para a função correspondente. Essa delegação de eventos também funciona para botões criados dinamicamente quando a lista de disciplinas ou o histórico são renderizados.
+
+### Funções e cálculos importantes
+
+- `formatarTempo(minutos)` converte um total de minutos para o formato `Xh Ym`, usado nas estatísticas e na meta.
+- `formatarDataLocal(data)` produz uma data no formato `AAAA-MM-DD` com os valores locais, evitando que uma conversão para UTC altere o dia registrado.
+- `obterInicioSemana(data)` calcula a segunda-feira da semana da data recebida. As estatísticas semanais consideram o período de segunda a domingo.
+- `renderizarHistoricoEStats()` ordena uma cópia dos registros mais recentes primeiro e calcula os totais de hoje, da semana e dos últimos 30 dias. Os registros armazenados não são reordenados.
+- `renderizarProgressoMetaSemanal(minutos)` compara o total semanal com a meta em horas convertida para minutos. O percentual pode passar de 100%, mas a largura da barra visual é limitada a 100%.
+- `escaparHTML(valor)` codifica caracteres especiais antes de inserir nomes e identificadores em trechos de HTML gerados pelo JavaScript.
+
+As renderizações usam elementos do DOM como `innerHTML`, `innerText` e `classList` para atualizar o conteúdo, os textos e a visibilidade das áreas do painel sem recarregar a página.
+
 ## Scripts npm
 
 | Comando | Descrição |
