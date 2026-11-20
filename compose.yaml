@@ -5,9 +5,11 @@ services:
       - "8080:80"
     volumes:
       - ./src:/usr/share/nginx/html:ro
-      - ./imagens:/usr/share/nginx/imagens:ro
+      - ./imagens:/usr/share/nginx/html/imagens:ro
+      - ./dist:/usr/share/nginx/html/dist:ro
     depends_on:
       - css-watch
+      - ts-watch
     restart: unless-stopped
 
   css-watch:
@@ -29,4 +31,15 @@ services:
         done
     volumes:
       - ./src:/app/src
+    restart: unless-stopped
+
+  ts-watch:
+    build:
+      context: .
+      target: build
+    command: ["npm", "run", "dev"]
+    volumes:
+      - ./src:/app/src
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./dist:/app/dist
     restart: unless-stopped

@@ -4,10 +4,14 @@
   "private": true,
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./src/output.css --minify",
-    "watch:css": "tailwindcss -i ./src/input.css -o ./src/output.css --watch"
+    "watch:css": "tailwindcss -i ./src/input.css -o ./src/output.css --watch",
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "check": "tsc --noEmit"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
-    "tailwindcss": "^4.1.0"
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0"
   }
 }
