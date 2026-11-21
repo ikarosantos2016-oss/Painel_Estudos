@@ -1,23 +1,70 @@
-// Recupera os dados salvos no navegador. Se for a primeira execução, cria a estrutura vazia.
-// `bd` mantém os concursos e os registros de estudo durante toda a execução do script.
-const bd = JSON.parse(localStorage.getItem('concursos_app')) || { concursos: [], logs: [] };
-let concursoAtual = null;
+//Aqui estou dizendo ao TS qual a forma exata dos dados.
+interface DatasConcurso{
+    prova: string;
+    resultado: string;
+    homologacao: string;
+}
+
+interface Disciolina {
+    id: string;
+    nome: string;
+}
+
+interface Concurso {
+    id: string;
+    nome: string;
+    datas: DatasConcurso;
+    metaSemanalHoras: number | null;
+    disciplinas: Disciolina[];
+}
+
+interface LogEstudo {
+    id: string;
+    idConcurso: string;
+    idDisciplina: string;
+    minutos: number;
+    data: string;
+    timestamp: number;
+}
+
+interface BancoDeDados {
+    concursos: Concurso[];
+    logs: LogEstudo[];
+}
+
+//Recupera os dados com segurança, checando antes se veio string ou null
+const dadosSalvos = localStorage.getItem('concursos_app');
+const bd: BancoDeDados = dadosSalvos ? JSON.parse(dadosSalvos) : { concursos: [], logs: [] };
+let concursoAtual: Concurso | null = null;
+
+// Auxiliar para buscar elementos do DOM garantindo que existem e têm o tipo HTML exato.
+function obterElemento<T extends HTMLElement>(id: string, construtor: new () => T): T {
+    const elemento = document.getElementById(id);
+    if (!(elemento instanceof construtor)) {
+        throw new Error(`Elemento #${id} não encontrado ou não corresponde ao tipo esperado.`);
+    }
+    return elemento;
+}
 
 // Aguarda o HTML estar pronto antes de procurar elementos e registrar os eventos da interface.
 document.addEventListener('DOMContentLoaded', () => {
     // Ao trocar o concurso selecionado, atualiza os dados exibidos no painel.
-    document.getElementById('concursoSelect').addEventListener('change', mudarConcurso);
+    obterElemento('concursoSelect', HTMLSelectElement).addEventListener('change', mudarConcurso);
+
     // Usa delegação de eventos para detectar alterações nos campos de data do painel.
-    document.getElementById('dashboard').addEventListener('change', event => {
-        if (event.target.matches('[data-date-field]')) salvarDatas();
+    obterElemento('dashboard', HTMLElement).addEventListener('change', event => {
+        if (event.target instanceof Element && event.target.matches('[data-date-field]')) {
+            salvarDatas();
+        }
     });
+
     // Um único listener trata os botões atuais e também os criados dinamicamente depois.
     document.addEventListener('click', event => {
         // Ignora cliques que não tenham um elemento HTML como alvo.
         if (!(event.target instanceof Element)) return;
 
         // Procura o botão (ou ancestral) que declara uma ação por meio de data-action.
-        const button = event.target.closest('[data-action]');
+        const button = event.target.closest<HTMLElement>('[data-action]');
         if (!button) return;
 
         // Encaminha cada ação da interface para a função responsável.
@@ -32,10 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 novaDisciplina();
                 break;
             case 'registrar-estudo':
-                registrarEstudo(button.dataset.disciplinaId);
+                if (button.dataset.disciplinaId) {
+                    registrarEstudo(button.dataset.disciplinaId);
+                }
                 break;
             case 'apagar-log':
-                apagarLog(button.dataset.logId);
+                if (button.dataset.logId) {
+                    apagarLog(button.dataset.logId);
+                }
                 break;
             case 'salvar-meta-semanal':
                 salvarMetaSemanal();
@@ -48,28 +99,37 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Inicializa a tela com os dados que já existem no navegador.
-function init() {
+const MAPA_HTML: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+};
+
+// Inicializa a tela com os dados que já existem no navegador.
+function init(): void {
     atualizarSelectConcursos();
     if (bd.concursos.length > 0) {
-        document.getElementById('concursoSelect').value = bd.concursos[0].id;
+        obterElemento('concursoSelect', HTMLSelectElement).value = bd.concursos[0].id;
         mudarConcurso();
     }
 }
 
 // Serializa o objeto de dados para JSON e o persiste no armazenamento local do navegador.
-function salvarBD() {
+function salvarBD(): void {
     localStorage.setItem('concursos_app', JSON.stringify(bd));
 }
 
 // Converte uma duração em minutos para o formato legível "Xh Ym".
-function formatarTempo(minutosTotais) {
+function formatarTempo(minutosTotais: number): string {
     const h = Math.floor(minutosTotais / 60);
     const m = minutosTotais % 60;
     return `${h}h ${m}m`;
 }
 
 // Formata uma data usando o fuso local, evitando que conversões UTC mudem o dia exibido.
-function formatarDataLocal(data) {
+function formatarDataLocal(data: Date): string {
     const ano = data.getFullYear();
     const mes = String(data.getMonth() + 1).padStart(2, '0');
     const dia = String(data.getDate()).padStart(2, '0');
@@ -77,14 +137,8 @@ function formatarDataLocal(data) {
 }
 
 // Codifica caracteres especiais antes de inserir valores em HTML, reduzindo risco de injeção.
-function escaparHTML(valor) {
-    return String(valor).replace(/[&<>"']/g, caractere => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    })[caractere]);
+function escaparHTML(valor: unknown): string {
+    return String(valor).replace(/[&<>"']/g, caractere => MAPA_HTML[caractere] ?? caractere);
 }
 
 // Solicita o nome de um concurso, cria sua estrutura inicial e salva/seleciona o novo item.
