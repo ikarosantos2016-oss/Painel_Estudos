@@ -14,7 +14,7 @@ Aplicação web para organizar a preparação para concursos: acompanhe editais,
 
 ## Tecnologias
 
-- HTML, CSS e JavaScript.
+- HTML, CSS e TypeScript (compilado para JavaScript).
 - Tailwind CSS 4 para gerar os estilos da interface.
 - Nginx para servir a aplicação na configuração Docker.
 - Docker Compose para executar a aplicação e observar alterações nos arquivos CSS de entrada durante o desenvolvimento.
@@ -32,9 +32,10 @@ Para desenvolver sem Docker:
 
 ## Executar com Docker Compose
 
-Na raiz do repositório, execute:
+Na pasta `Painel_Estudos`, onde está este arquivo `compose.yaml`, execute:
 
 ```bash
+cd Painel_Estudos
 docker compose up --build
 ```
 
@@ -97,7 +98,9 @@ JSON.parse(localStorage.getItem('concursos_app'))
 │   ├── index.html             # Estrutura da interface
 │   ├── input.css              # Entrada do Tailwind CSS e estilos do projeto
 │   ├── output.css             # CSS gerado pelo build
-│   └── script.js              # Lógica da aplicação e persistência local
+│   └── script.ts              # Lógica da aplicação e persistência local
+├── dist/
+│   └── script.js              # JavaScript compilado pelo TypeScript
 ├── compose.yaml               # Serviços da aplicação e do observador de CSS
 ├── Dockerfile                 # Build do CSS e imagem final com Nginx
 ├── nginx.default.conf         # Configuração do servidor Nginx
@@ -107,7 +110,7 @@ JSON.parse(localStorage.getItem('concursos_app'))
 
 ## Como o código funciona
 
-A lógica da aplicação está em `src/script.js` e é executada no próprio navegador. O objeto `bd` representa os dados carregados da chave `concursos_app` no `localStorage`. Ele tem duas listas principais:
+A lógica da aplicação está em `src/script.ts` e é compilada para `dist/script.js`, executado no próprio navegador. O objeto `bd` representa os dados carregados da chave `concursos_app` no `localStorage`. Ele tem duas listas principais:
 
 - `concursos`: cada concurso guarda seu identificador, nome, datas importantes, meta semanal e disciplinas.
 - `logs`: cada sessão de estudo guarda seu identificador, o concurso e a disciplina associados, a duração em minutos, a data e um timestamp.
@@ -140,3 +143,5 @@ As renderizações usam elementos do DOM como `innerHTML`, `innerText` e `classL
 | --- | --- |
 | `npm run build:css` | Compila e minifica o CSS em `src/output.css`. |
 | `npm run watch:css` | Observa os arquivos de entrada e recompila o CSS quando necessário. |
+| `npm run build` | Verifica os tipos e compila TypeScript para `dist/`. |
+| `npm run check` | Verifica os tipos sem gerar arquivos. |

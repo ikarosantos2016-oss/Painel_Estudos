@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @source "./index.html";
-@source "./script.js";
+@source "./script.ts";
 
 @theme {
     --color-canvas: #f0f3ef;

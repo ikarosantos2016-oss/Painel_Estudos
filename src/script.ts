@@ -5,7 +5,7 @@ interface DatasConcurso{
     homologacao: string;
 }
 
-interface Disciolina {
+interface Disciplina {
     id: string;
     nome: string;
 }
@@ -15,7 +15,7 @@ interface Concurso {
     nome: string;
     datas: DatasConcurso;
     metaSemanalHoras: number | null;
-    disciplinas: Disciolina[];
+    disciplinas: Disciplina[];
 }
 
 interface LogEstudo {
@@ -142,11 +142,11 @@ function escaparHTML(valor: unknown): string {
 }
 
 // Solicita o nome de um concurso, cria sua estrutura inicial e salva/seleciona o novo item.
-function novoConcurso() {
+function novoConcurso(): void {
     const nome = prompt("Qual o nome do concurso? (ex: IFCE - Técnico TI)");
     if (!nome) return;
 
-    const novo = {
+    const novo: Concurso = {
         id: Date.now().toString(),
         nome: nome,
         datas: { prova: '', resultado: '', homologacao: '' },
@@ -157,13 +157,13 @@ function novoConcurso() {
     bd.concursos.push(novo);
     salvarBD();
     atualizarSelectConcursos();
-    document.getElementById('concursoSelect').value = novo.id;
+    obterElemento('concursoSelect', HTMLSelectElement).value = novo.id;
     mudarConcurso();
 }
 
 // Reconstrói as opções do seletor com os concursos atualmente armazenados.
-function atualizarSelectConcursos() {
-    const select = document.getElementById('concursoSelect');
+function atualizarSelectConcursos(): void {
+    const select = obterElemento('concursoSelect', HTMLSelectElement);
     select.innerHTML = '<option value="">Selecione...</option>';
     bd.concursos.forEach(concurso => {
         select.innerHTML += `<option value="${escaparHTML(concurso.id)}">${escaparHTML(concurso.nome)}</option>`;
@@ -171,65 +171,68 @@ function atualizarSelectConcursos() {
 }
 
 // Sincroniza o concurso selecionado com o painel e seus campos, listas e estatísticas.
-function mudarConcurso() {
-    const id = document.getElementById('concursoSelect').value;
-    const btnExcluir = document.getElementById('btnExcluirEdital');
+function mudarConcurso(): void {
+    const id = obterElemento('concursoSelect', HTMLSelectElement).value;
+    const btnExcluir = obterElemento('btnExcluirEdital', HTMLElement);
+    const dashboard = obterElemento('dashboard', HTMLElement);
 
     if (!id) {
         // Sem seleção, esconde o painel e remove a referência ao concurso ativo.
-        document.getElementById('dashboard').classList.add('hidden');
+        dashboard.classList.add('hidden');
         btnExcluir.classList.add('hidden');
         concursoAtual = null;
         return;
     }
 
-    concursoAtual = bd.concursos.find(concurso => concurso.id === id);
+    concursoAtual = bd.concursos.find(concurso => concurso.id === id) ?? null;
     if (!concursoAtual) return;
 
-    document.getElementById('dashboard').classList.remove('hidden');
+    dashboard.classList.remove('hidden');
     btnExcluir.classList.remove('hidden');
-    document.getElementById('dataProva').value = concursoAtual.datas.prova;
-    document.getElementById('dataResultado').value = concursoAtual.datas.resultado;
-    document.getElementById('dataHomologacao').value = concursoAtual.datas.homologacao;
-    document.getElementById('metaSemanalHoras').value = Number.isFinite(concursoAtual.metaSemanalHoras) && concursoAtual.metaSemanalHoras > 0
-        ? concursoAtual.metaSemanalHoras
-        : '';
+    obterElemento('dataProva', HTMLInputElement).value = concursoAtual.datas.prova;
+    obterElemento('dataResultado', HTMLInputElement).value = concursoAtual.datas.resultado;
+    obterElemento('dataHomologacao', HTMLInputElement).value = concursoAtual.datas.homologacao;
+
+    const meta = concursoAtual.metaSemanalHoras;
+    obterElemento('metaSemanalHoras', HTMLInputElement).value =
+        meta !== null && Number.isFinite(meta) && meta > 0 ? String(meta) : '';
 
     renderizarDisciplinas();
     renderizarHistoricoEStats();
 }
 
 // Exclui o concurso e todos os registros de estudo associados, após confirmação explícita.
-function excluirConcurso() {
+function excluirConcurso(): void {
     if (!concursoAtual) return;
+    const atual = concursoAtual;
 
-    const confirmacao = confirm(`Tem certeza que deseja excluir o edital "${concursoAtual.nome}"? \n\nIsso apagará permanentemente TODAS as disciplinas e o histórico de estudos (logs) vinculados a este concurso.`);
+    const confirmacao = confirm(`Tem certeza que deseja excluir o edital "${atual.nome}"? \n\nIsso apagará permanentemente TODAS as disciplinas e o histórico de estudos (logs) vinculados a este concurso.`);
     if (!confirmacao) return;
 
-    bd.concursos = bd.concursos.filter(concurso => concurso.id !== concursoAtual.id);
-    bd.logs = bd.logs.filter(log => log.idConcurso !== concursoAtual.id);
+    bd.concursos = bd.concursos.filter(concurso => concurso.id !== atual.id);
+    bd.logs = bd.logs.filter(log => log.idConcurso !== atual.id);
     salvarBD();
 
     atualizarSelectConcursos();
-    document.getElementById('concursoSelect').value = "";
+    obterElemento('concursoSelect', HTMLSelectElement).value = "";
     mudarConcurso();
     alert("Edital e histórico excluídos com sucesso!");
 }
 
 // Lê as datas dos campos do formulário e as salva no concurso selecionado.
-function salvarDatas() {
+function salvarDatas(): void {
     if (!concursoAtual) return;
-    concursoAtual.datas.prova = document.getElementById('dataProva').value;
-    concursoAtual.datas.resultado = document.getElementById('dataResultado').value;
-    concursoAtual.datas.homologacao = document.getElementById('dataHomologacao').value;
+    concursoAtual.datas.prova = obterElemento('dataProva', HTMLInputElement).value;
+    concursoAtual.datas.resultado = obterElemento('dataResultado', HTMLInputElement).value;
+    concursoAtual.datas.homologacao = obterElemento('dataHomologacao', HTMLInputElement).value;
     salvarBD();
 }
 
 // Valida e salva uma meta semanal; a validação do próprio input também é respeitada.
-function salvarMetaSemanal() {
+function salvarMetaSemanal(): void {
     if (!concursoAtual) return;
 
-    const input = document.getElementById('metaSemanalHoras');
+    const input = obterElemento('metaSemanalHoras', HTMLInputElement);
     const metaHoras = input.valueAsNumber;
     if (!input.value || !input.checkValidity() || !Number.isFinite(metaHoras) || metaHoras <= 0 || metaHoras > 168) {
         alert("Informe uma meta entre 0,5 e 168 horas, em incrementos de 0,5 hora.");
@@ -242,7 +245,7 @@ function salvarMetaSemanal() {
 }
 
 // Adiciona uma disciplina ao concurso atual e atualiza a lista visível.
-function novaDisciplina() {
+function novaDisciplina(): void {
     if (!concursoAtual) return;
 
     const nome = prompt("Nome da disciplina: (ex: Redes de Computadores, Lei 8.112)");
@@ -254,17 +257,19 @@ function novaDisciplina() {
 }
 
 // Gera o HTML da lista de disciplinas, incluindo um campo de minutos e botão por disciplina.
-function renderizarDisciplinas() {
-    const div = document.getElementById('listaDisciplinas');
+function renderizarDisciplinas(): void {
+    if (!concursoAtual) return;
+    const concurso = concursoAtual;
+    const div = obterElemento('listaDisciplinas', HTMLElement);
     div.innerHTML = '';
 
-    if (concursoAtual.disciplinas.length === 0) {
+    if (concurso.disciplinas.length === 0) {
         // Exibe uma mensagem de estado vazio em vez de deixar a área sem conteúdo.
         div.innerHTML = '<p class="rounded-2xl border border-dashed border-line bg-canvas px-4 py-6 text-center text-sm text-muted">Nenhuma disciplina adicionada. Clique em “+ Adicionar disciplina” para começar.</p>';
         return;
     }
 
-    concursoAtual.disciplinas.forEach(disciplina => {
+    concurso.disciplinas.forEach(disciplina => {
         div.innerHTML += `
             <div class="flex flex-col gap-3 rounded-2xl border border-line bg-canvas p-4 sm:flex-row sm:items-center sm:justify-between">
                 <span class="font-semibold text-ink">${escaparHTML(disciplina.nome)}</span>
@@ -281,10 +286,10 @@ function renderizarDisciplinas() {
 }
 
 // Valida os minutos informados e registra uma sessão de estudo com data e horário exatos.
-function registrarEstudo(idDisciplina) {
+function registrarEstudo(idDisciplina: string): void {
     if (!concursoAtual) return;
 
-    const input = document.getElementById(`minutos-${idDisciplina}`);
+    const input = obterElemento(`minutos-${idDisciplina}`, HTMLInputElement);
     const minutos = parseInt(input.value, 10);
 
     if (isNaN(minutos) || minutos <= 0) {
@@ -309,7 +314,7 @@ function registrarEstudo(idDisciplina) {
 }
 
 // Remove um registro de estudo pelo identificador e atualiza o histórico e os totais.
-function apagarLog(idLog) {
+function apagarLog(idLog: string): void {
     if (!concursoAtual) return;
 
     bd.logs = bd.logs.filter(log => log.id !== idLog);
@@ -318,7 +323,7 @@ function apagarLog(idLog) {
 }
 
 // Retorna a segunda-feira da semana que contém a data recebida (sem alterar a data original).
-function obterInicioSemana(data) {
+function obterInicioSemana(data: Date): Date {
     const inicioSemana = new Date(data.getFullYear(), data.getMonth(), data.getDate());
     const diasDesdeSegunda = (inicioSemana.getDay() + 6) % 7;
     inicioSemana.setDate(inicioSemana.getDate() - diasDesdeSegunda);
@@ -326,23 +331,25 @@ function obterInicioSemana(data) {
 }
 
 // Atualiza os números, a barra de progresso e a mensagem referentes à meta semanal.
-function renderizarProgressoMetaSemanal(minutosEstudados) {
+function renderizarProgressoMetaSemanal(minutosEstudados: number): void {
+    if (!concursoAtual) return;
+
     const metaHoras = concursoAtual.metaSemanalHoras;
-    const metaDefinida = Number.isFinite(metaHoras) && metaHoras > 0;
+    const metaDefinida = metaHoras !== null && Number.isFinite(metaHoras) && metaHoras > 0;
     const minutosMeta = metaDefinida ? metaHoras * 60 : 0;
     const percentual = metaDefinida ? Math.round((minutosEstudados / minutosMeta) * 100) : 0;
     // O texto pode ultrapassar 100%, mas a largura visual da barra fica limitada a 100%.
     const percentualBarra = Math.min(percentual, 100);
 
-    document.getElementById('estudadoMetaSemanal').innerText = formatarTempo(minutosEstudados);
-    document.getElementById('objetivoMetaSemanal').innerText = metaDefinida ? formatarTempo(minutosMeta) : 'Não definida';
-    document.getElementById('restanteMetaSemanal').innerText = metaDefinida
+    obterElemento('estudadoMetaSemanal', HTMLElement).innerText = formatarTempo(minutosEstudados);
+    obterElemento('objetivoMetaSemanal', HTMLElement).innerText = metaDefinida ? formatarTempo(minutosMeta) : 'Não definida';
+    obterElemento('restanteMetaSemanal', HTMLElement).innerText = metaDefinida
         ? formatarTempo(Math.max(minutosMeta - minutosEstudados, 0))
         : '—';
-    document.getElementById('percentualMetaSemanal').innerText = `${percentual}%`;
-    document.getElementById('preenchimentoMetaSemanal').style.width = `${percentualBarra}%`;
-    document.getElementById('barraMetaSemanal').setAttribute('aria-valuenow', percentualBarra);
-    document.getElementById('statusMetaSemanal').innerText = metaDefinida
+    obterElemento('percentualMetaSemanal', HTMLElement).innerText = `${percentual}%`;
+    obterElemento('preenchimentoMetaSemanal', HTMLElement).style.width = `${percentualBarra}%`;
+    obterElemento('barraMetaSemanal', HTMLElement).setAttribute('aria-valuenow', String(percentualBarra));
+    obterElemento('statusMetaSemanal', HTMLElement).innerText = metaDefinida
         ? percentual >= 100
             ? `Meta alcançada! Você completou ${percentual}% do objetivo semanal.`
             : `Você completou ${percentual}% da meta. Continue no seu ritmo.`
@@ -350,9 +357,11 @@ function renderizarProgressoMetaSemanal(minutosEstudados) {
 }
 
 // Recalcula os totais de estudo, redesenha o histórico e atualiza a meta semanal.
-function renderizarHistoricoEStats() {
+function renderizarHistoricoEStats(): void {
+    if (!concursoAtual) return;
+    const concurso = concursoAtual;
     // Mantém neste painel apenas registros ligados ao concurso atualmente selecionado.
-    const logsConcurso = bd.logs.filter(log => log.idConcurso === concursoAtual.id);
+    const logsConcurso = bd.logs.filter(log => log.idConcurso === concurso.id);
     const agora = new Date();
     const inicioHoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
     const inicioAmanha = new Date(inicioHoje);
@@ -366,7 +375,7 @@ function renderizarHistoricoEStats() {
     let minMes = 0;
     const msPorDia = 86400000;
     const timestampAgora = agora.getTime();
-    const tbody = document.getElementById('tabelaHistorico');
+    const tbody = obterElemento('tabelaHistorico', HTMLTableSectionElement);
     tbody.innerHTML = '';
 
     // Ordena uma cópia para mostrar os registros mais recentes primeiro sem reordenar `bd.logs`.
@@ -378,7 +387,7 @@ function renderizarHistoricoEStats() {
         if ((timestampAgora - log.timestamp) <= (30 * msPorDia)) minMes += log.minutos;
 
         // Se a disciplina não existir mais, mantém o registro e informa isso no histórico.
-        const disciplina = concursoAtual.disciplinas.find(item => item.id === log.idDisciplina);
+        const disciplina = concurso.disciplinas.find(item => item.id === log.idDisciplina);
         const nomeDisciplina = disciplina ? disciplina.nome : 'Disciplina Removida';
         const dataBR = new Date(log.data + "T00:00:00").toLocaleDateString('pt-BR');
 
@@ -399,9 +408,9 @@ function renderizarHistoricoEStats() {
         tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-sm text-muted">Nenhum registro encontrado por enquanto.</td></tr>';
     }
 
-    document.getElementById('statsHoje').innerText = formatarTempo(minHoje);
-    document.getElementById('statsSemana').innerText = formatarTempo(minSemana);
-    document.getElementById('statsMes').innerText = formatarTempo(minMes);
+    obterElemento('statsHoje', HTMLElement).innerText = formatarTempo(minHoje);
+    obterElemento('statsSemana', HTMLElement).innerText = formatarTempo(minSemana);
+    obterElemento('statsMes', HTMLElement).innerText = formatarTempo(minMes);
     // A meta semanal usa o mesmo total calculado para a estatística da semana.
     renderizarProgressoMetaSemanal(minSemana);
 }

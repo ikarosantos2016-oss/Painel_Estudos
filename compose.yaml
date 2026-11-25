@@ -1,12 +1,14 @@
 services:
   painel-estudos:
-    build: .
+    build:
+      context: .
+      network: host
     ports:
       - "8080:80"
     volumes:
       - ./src:/usr/share/nginx/html:ro
-      - ./imagens:/usr/share/nginx/html/imagens:ro
-      - ./dist:/usr/share/nginx/html/dist:ro
+      - ./imagens:/usr/share/nginx/imagens:ro
+      - ./dist:/usr/share/nginx/dist:ro
     depends_on:
       - css-watch
       - ts-watch
@@ -16,6 +18,7 @@ services:
     build:
       context: .
       target: build
+      network: host
     command:
       - /bin/sh
       - -c
@@ -37,6 +40,7 @@ services:
     build:
       context: .
       target: build
+      network: host
     command: ["npm", "run", "dev"]
     volumes:
       - ./src:/app/src
