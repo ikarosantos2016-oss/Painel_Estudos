@@ -273,16 +273,48 @@ function renderizarDisciplinas(): void {
         div.innerHTML += `
             <div class="flex flex-col gap-3 rounded-2xl border border-line bg-canvas p-4 sm:flex-row sm:items-center sm:justify-between">
                 <span class="font-semibold text-ink">${escaparHTML(disciplina.nome)}</span>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <label for="minutos-${escaparHTML(disciplina.id)}" class="sr-only">Minutos estudados</label>
                     <input type="number" min="1" id="minutos-${escaparHTML(disciplina.id)}" placeholder="Minutos" class="min-h-10 w-28 rounded-xl border border-line bg-white px-3 text-center text-sm text-ink outline-none transition placeholder:text-muted/70 focus:border-sage-strong focus:ring-4 focus:ring-sage">
                     <button type="button" data-action="registrar-estudo" data-disciplina-id="${escaparHTML(disciplina.id)}" class="min-h-10 rounded-xl bg-sage px-4 text-sm font-bold text-sage-strong transition hover:bg-sage-strong hover:text-white focus-visible:ring-4 focus-visible:ring-sage">
                         Salvar
                     </button>
+                    <div data-daily-total data-disciplina-id="${escaparHTML(disciplina.id)}" aria-label="Total estudado hoje nesta disciplina" class="min-w-24 rounded-xl border border-line bg-white px-3 py-2 text-center">
+                        <span class="block text-xs font-bold uppercase tracking-wide text-muted">Hoje</span>
+                        <span data-daily-total-value class="block text-sm font-bold text-ink">0h 0m</span>
+                    </div>
                 </div>
             </div>
         `;
     });
+
+    atualizarTotaisDiariosDisciplinas();
+}
+
+// Atualiza os pequenos totais diários sem reconstruir os campos de entrada das disciplinas.
+function atualizarTotaisDiariosDisciplinas(): void {
+    if (!concursoAtual) return;
+
+    const dataHoje = formatarDataLocal(new Date());
+    const totaisPorDisciplina = new Map<string, number>();
+    bd.logs.forEach(log => {
+        if (log.idConcurso === concursoAtual?.id && log.data === dataHoje) {
+            totaisPorDisciplina.set(
+                log.idDisciplina,
+                (totaisPorDisciplina.get(log.idDisciplina) ?? 0) + log.minutos
+            );
+        }
+    });
+
+    obterElemento('listaDisciplinas', HTMLElement)
+        .querySelectorAll<HTMLElement>('[data-daily-total]')
+        .forEach(card => {
+            const idDisciplina = card.dataset.disciplinaId;
+            const valor = card.querySelector<HTMLElement>('[data-daily-total-value]');
+            if (idDisciplina && valor) {
+                valor.innerText = formatarTempo(totaisPorDisciplina.get(idDisciplina) ?? 0);
+            }
+        });
 }
 
 // Valida os minutos informados e registra uma sessão de estudo com data e horário exatos.
@@ -310,6 +342,7 @@ function registrarEstudo(idDisciplina: string): void {
 
     input.value = '';
     salvarBD();
+    atualizarTotaisDiariosDisciplinas();
     renderizarHistoricoEStats();
 }
 
@@ -319,6 +352,7 @@ function apagarLog(idLog: string): void {
 
     bd.logs = bd.logs.filter(log => log.id !== idLog);
     salvarBD();
+    atualizarTotaisDiariosDisciplinas();
     renderizarHistoricoEStats();
 }
 
